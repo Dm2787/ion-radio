@@ -1,0 +1,18 @@
+{
+  "short_name": "ION Radio",
+  "name": "ION AUDIO System",
+  "description": "Nowoczesny odtwarzacz radiowy z wizualizacjami",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3003/3003920.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#63412c",
+  "background_color": "#e0ddd5",
+  "orientation": "portrait"
+}
