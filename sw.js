@@ -1,8 +1,10 @@
-const CACHE_NAME = 'ion-radio-v2.5';
+const CACHE_NAME = 'ion-radio-v2.6';
 const assets = [
   './',
   './index.html',
   './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
   'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=JetBrains+Mono&family=Oswald:wght@500&display=swap'
 ];
 
@@ -36,7 +38,7 @@ self.addEventListener('fetch', e => {
 
   // Bezpieczeństwo: Omijaj cache dla zewnętrznych strumieni audio (np. http, icecast, shoutcast)
   // Przeglądarki mobilne wymagają bezpośredniego dostępu sieciowego dla tagów <audio>
-  if (e.request.destination === 'audio' || url.header?.get('Range') || url.pathname.endsWith('.mp3') || url.port === '8005') {
+  if (e.request.destination === 'audio' || e.request.headers.get('Range') || url.pathname.endsWith('.mp3') || url.port === '8005') {
     return; // Pozwól przeglądarce obsłużyć to domyślnie przez sieć
   }
 
