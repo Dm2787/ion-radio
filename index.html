@@ -3,73 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ION AUDIO - System Grający</title>
+    <title>ION AUDIO - SYSTEM v2.5</title>
     <link rel="manifest" href="manifest.json">
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=JetBrains+Mono&family=Oswald:wght@500&display=swap');
-        
-        :root { 
-            --wood: #63412c; --body-bg: #e0ddd5; --panel-bg: linear-gradient(to bottom, #f0f0f0, #ccc);
-            --interface-ui: #00d4ff; --rds-green: #33ff33; --danger: #d32f2f; 
-        }
-
+        :root { --wood: #63412c; --body-bg: #e0ddd5; --panel-bg: linear-gradient(to bottom, #f0f0f0, #ccc); --interface-ui: #00d4ff; --rds-green: #33ff33; --danger: #d32f2f; }
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; touch-action: manipulation; outline: none !important; }
         body { background: var(--body-bg); font-family: 'DM Sans', sans-serif; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-
         .console-unit { width: 100%; max-width: 480px; background: var(--wood); border-radius: 20px; padding: 8px; box-shadow: 0 30px 60px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.1); position: relative; margin: 20px 0; }
         .branding-panel { height: 45px; width: 100%; padding: 0 15px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-
         .on-air-indicator { font-family: 'Oswald', sans-serif; font-size: 14px; text-transform: uppercase; color: rgba(0,0,0,0.2); padding: 3px 8px; border-radius: 4px; background: rgba(0,0,0,0.1); box-shadow: inset 0 1px 2px rgba(0,0,0,0.5); transition: all 0.3s; display: flex; align-items: center; gap: 5px; }
         .on-air-indicator::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: rgba(0,0,0,0.2); transition: all 0.3s; }
-        
         .brand-right { display: flex; align-items: center; color: rgba(255,255,255,0.05); font-size: 13px; font-weight: 700; letter-spacing: 3px; transition: color 0.3s; }
         .brand-logo-base { width: 22px; height: 22px; margin-right: 10px; position: relative; display: flex; align-items: center; justify-content: center; }
         .brand-ring { width: 100%; height: 100%; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #555 0%, #222 60%, #000 100%); border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s; box-shadow: 0 2px 4px rgba(0,0,0,0.6); }
         .brand-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.05); transition: all 0.3s; }
-
         .front-panel { background: var(--panel-bg); border-radius: 15px; padding: 25px 15px; border: 1px solid #999; }
-        .display-unit-frame { background: #000; border: 4px solid #333; border-radius: 10px; overflow: hidden; margin-bottom: 25px; box-shadow: inset 0 0 20px #000; }
         
+        /* Ekran na logo u góry obudowy */
+        .logo-screen-frame { 
+            background: #000; 
+            border: 4px solid #333; 
+            border-radius: 10px; 
+            height: 110px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: inset 0 0 20px #000; 
+            overflow: hidden;
+            transition: border-color 0.3s;
+        }
+        /* Stałe logo dopasowane do ekranu */
+        #station-logo-display { 
+            max-height: 95px; 
+            max-width: 90%; 
+            object-fit: contain; 
+            display: none; 
+            transition: opacity 0.5s ease;
+            opacity: 0;
+        }
+
+        .display-unit-frame { background: #000; border: 4px solid #333; border-radius: 10px; overflow: hidden; margin-bottom: 25px; box-shadow: inset 0 0 20px #000; }
         .rds-bar { height: 42px; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--rds-green); opacity: 0.1; transition: opacity 0.5s ease; overflow: hidden; position: relative; }
         .rds-marquee { flex: 1; white-space: nowrap; overflow: hidden; margin: 0 10px; position: relative; height: 100%; display: flex; align-items: center; }
         .rds-text { position: absolute; white-space: nowrap; animation: marquee 15s linear infinite; }
         @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-150%); } }
-
         #rds-scale-display { display: none; position: absolute; left: 10px; right: 10px; background: #000; height: 100%; align-items: center; font-weight: bold; letter-spacing: 1px; z-index: 10; }
-
         .display-container { height: 120px; position: relative; overflow: hidden; border-top: 1px solid #222; }
         #vis-canvas { width: 100%; height: 100%; display: block; }
-        #station-label { position: absolute; top: 10px; right: 15px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--interface-ui); background: rgba(0,0,0,0.8); padding: 2px 5px; border-radius: 3px; z-index: 5; opacity: 0; transition: opacity 0.5s; }
-
+        #station-label { position: absolute; top: 10px; right: 10px; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--interface-ui); background: rgba(0,0,0,0.8); padding: 2px 5px; border-radius: 3px; z-index: 5; opacity: 0; transition: opacity 0.5s; }
+        
         .controls-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 100%; margin-bottom: 15px; }
         .knob-group { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
         .knob-stack { width: 45px; height: 45px; border-radius: 50%; position: relative; box-shadow: 0 4px 6px rgba(0,0,0,0.15); }
         .knob-base { width: 100%; height: 100%; background: #fff; border-radius: 50%; border: 1px solid #bbb; cursor: ns-resize; touch-action: none; position: absolute; }
         .knob-indicator { position: absolute; top: 4px; left: 50%; transform: translateX(-50%); width: 3px; height: 10px; background: #333; border-radius: 2px; }
         .label { font-size: 8px; font-weight: 700; color: #666; text-transform: uppercase; text-align: center; }
-
-        /* POWIĘKSZONE PRZYCISKI */
         .buttons-row { display: flex; justify-content: space-between; gap: 8px; padding-top: 15px; border-top: 1px solid #bbb; flex-wrap: wrap; }
-        .push-button { 
-            flex: 1; min-width: 65px; height: 48px; /* Zwiększona wysokość i szerokość */
-            background: #fff; border: 1px solid #bbb; border-radius: 6px; 
-            cursor: pointer; font-size: 10px; box-shadow: 0 4px 0 #999; 
-            font-weight: bold; transition: all 0.05s; display: flex; 
-            align-items: center; justify-content: center; text-transform: uppercase;
-        }
+        .push-button { flex: 1; min-width: 65px; height: 48px; background: #fff; border: 1px solid #bbb; border-radius: 6px; cursor: pointer; font-size: 10px; box-shadow: 0 4px 0 #999; font-weight: bold; transition: all 0.05s; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
         .push-button:active { transform: translateY(3px); box-shadow: 0 1px 0 #999; }
-        
         .power-btn { background: #333; color: #fff; border: none; min-width: 55px; height: 45px; }
         .power-btn.on { background: var(--danger); box-shadow: 0 0 15px rgba(211,47,47,0.4); }
         .lock-btn.active { background: var(--danger) !important; color: white !important; box-shadow: 0 0 10px rgba(211,47,47,0.6); }
-
         .power-active .brand-right { color: #fff; text-shadow: 0 0 8px #fff; }
         .power-active .brand-dot { background: #fff; box-shadow: 0 0 10px #fff; }
         .power-active .on-air-indicator { color: #fff; background: rgba(211,47,47,0.2); border: 1px solid var(--danger); }
         .power-active .rds-bar { opacity: 1; }
+        .power-active .logo-screen-frame { border-color: #555; }
         .power-active #station-label { opacity: 1; }
-
         .manager-container { width: 100%; max-width: 480px; background: #fff; border-radius: 15px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-top: 20px; }
         .st-list { margin-bottom: 15px; max-height: 200px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; }
         .st-item { padding: 12px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; font-size: 14px; cursor: pointer; }
@@ -77,9 +80,11 @@
         .fav-star { font-size: 20px; color: #ccc; transition: color 0.2s; padding-right: 10px; }
         .fav-star.active { color: #ffcc00; }
         .st-info { flex: 1; display: flex; align-items: center; }
-        
         input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 8px; }
         #add-st-btn { background: #333; color: #fff; padding: 14px; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; width: 100%; }
+        .backup-row { display: flex; gap: 10px; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px; }
+        .backup-btn { flex: 1; background: transparent; border: 1px solid #ddd; color: #888; font-size: 9px; padding: 5px; border-radius: 4px; cursor: pointer; text-transform: uppercase; }
+        .backup-btn:hover { background: #f9f9f9; }
     </style>
 </head>
 <body id="radio-body">
@@ -92,6 +97,10 @@
             </div>
         </div>
         <div class="front-panel">
+            <div class="logo-screen-frame">
+                <img id="station-logo-display" alt="Logo">
+            </div>
+
             <div class="display-unit-frame">
                 <div class="rds-bar">
                     <div id="rds-scale-display">GŁOŚNOŚĆ: [||||||....]</div>
@@ -123,12 +132,18 @@
         <div class="st-list" id="playlist-box"></div>
         <input type="text" id="new-name" placeholder="Nazwa stacji">
         <input type="text" id="new-url" placeholder="Adres URL MP3">
+        <input type="text" id="new-icon" placeholder="Adres URL logo (opcjonalnie)">
         <button id="add-st-btn">DODAJ STACJĘ</button>
+        <div class="backup-row">
+            <button class="backup-btn" onclick="exportBackup()">Eksportuj Backup</button>
+            <input type="file" id="import-input" style="display:none" onchange="importBackup(event)">
+            <button class="backup-btn" onclick="document.getElementById('import-input').click()">Wczytaj Backup</button>
+        </div>
     </div>
-        <script>
+    <script>
         let stations = JSON.parse(localStorage.getItem('ion_stations_v16_final')) || [
-            { name: "Jazz Radio FM", url: "https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3", fav: false },
-            { name: "Radio Party", url: "http://s3.radioparty.pl:8005/glowny", fav: false }
+            { name: "Jazz Radio FM", url: "https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3", fav: false, icon: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Jazz_Radio_logo.png/512px-Jazz_Radio_logo.png" },
+            { name: "Radio Party", url: "http://s3.radioparty.pl:8005/glowny", fav: false, icon: "https://radioparty.pl/templates/rt_myriad/images/logo.png" }
         ];
         
         let currentIdx = 0, isOn = false, audioCtx, analyser, dataArray, peaks = [], wakeLock = null;
@@ -137,6 +152,7 @@
         const stream = new Audio(); stream.crossOrigin = "anonymous";
         const canvas = document.getElementById('vis-canvas');
         const ctx = canvas.getContext('2d');
+        const stationLabel = document.getElementById('station-label');
 
         async function initAudio() {
             if(audioCtx) return;
@@ -150,6 +166,10 @@
             peaks = new Array(analyser.frequencyBinCount).fill(0);
             source.connect(bassFilter).connect(trebleFilter).connect(analyser).connect(masterGain).connect(audioCtx.destination);
             resize(); render();
+        }
+
+        function fade(target, duration = 0.5) {
+            if(masterGain) masterGain.gain.setTargetAtTime(target, audioCtx.currentTime, duration);
         }
 
         function showRDSScale(label, value) {
@@ -187,6 +207,7 @@
             if(!isOn) return;
             analyser.getByteFrequencyData(dataArray);
             const barCount = 64; const barWidth = canvas.width / barCount;
+            
             switch(visualMode) {
                 case 0: for(let i=0; i<barCount; i++) { let h = (dataArray[i]/255)*canvas.height*0.85; if(h>peaks[i]) peaks[i]=h; else peaks[i]-=1.2; ctx.fillStyle=`hsl(${currentHue},100%,50%)`; ctx.fillRect(i*barWidth+1,canvas.height-h,barWidth-1,h); ctx.fillStyle="#fff"; ctx.fillRect(i*barWidth+1,canvas.height-peaks[i]-2,barWidth-1,2); } break;
                 case 1: const mid = canvas.height/2; for(let i=0; i<barCount; i++) { let h = (dataArray[i]/255)*mid*0.8; ctx.fillStyle=`hsl(${(currentHue+i*2)%360},100%,50%)`; ctx.fillRect(i*barWidth+1,mid-h,barWidth-1,h*2); } break;
@@ -194,12 +215,23 @@
                 case 3: for(let i=0; i<barCount/2; i++) { let h = (dataArray[i*2]/255)*canvas.height*0.8; let cX = canvas.width/2; ctx.fillStyle=`hsl(${currentHue},100%,50%)`; ctx.fillRect(cX+i*barWidth,canvas.height-h,barWidth-2,h); ctx.fillRect(cX-i*barWidth-barWidth,canvas.height-h,barWidth-2,h); } break;
                 case 4: ctx.beginPath(); ctx.strokeStyle=`hsl(${currentHue},100%,60%)`; ctx.lineWidth=3; for(let i=0; i<barCount; i++) { let y = canvas.height-(dataArray[i*2]/255*canvas.height*0.8); if(i===0) ctx.moveTo(0,y); else ctx.lineTo(i*barWidth*2,y); } ctx.stroke(); break;
                 case 5: let tD = new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(tD); ctx.beginPath(); ctx.strokeStyle="#fff"; ctx.lineWidth=2; for(let i=0; i<analyser.fftSize; i++) { let x = i*(canvas.width/analyser.fftSize); let y = (tD[i]/128.0)*(canvas.height/2); if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y); } ctx.stroke(); break;
+                case 6: 
+                    const center = {x: canvas.width/2, y: canvas.height/2};
+                    const radius = (dataArray[0]/255) * 50 + 20;
+                    ctx.beginPath(); ctx.arc(center.x, center.y, radius, 0, Math.PI*2);
+                    ctx.strokeStyle = `hsl(${currentHue}, 100%, 50%)`; ctx.lineWidth = 5; ctx.stroke();
+                    for(let i=0; i<5; i++) {
+                        let rad = (dataArray[i*10]/255) * 100;
+                        ctx.beginPath(); ctx.arc(center.x, center.y, rad, 0, Math.PI*2);
+                        ctx.strokeStyle = `rgba(255,255,255,0.2)`; ctx.stroke();
+                    }
+                    break;
             }
         }
 
         function updateRDS() {
             if(!isOn) return;
-            const tryby = ["SŁUPKI", "LUSTRO", "BLOKI", "SYMETRIA", "WSTĘGA", "FALA"];
+            const tryby = ["SŁUPKI", "LUSTRO", "BLOKI", "SYMETRIA", "WSTĘGA", "FALA", "PULS"];
             document.getElementById('rds-info').innerText = `ION AUDIO >> STACJA: ${stations[currentIdx].name.toUpperCase()} >> TRYB: ${tryby[visualMode]} >> `;
             document.getElementById('rds-sig').innerText = `SYG: ${-20 + Math.floor(Math.random()*5)}dB`;
             setTimeout(updateRDS, 4000);
@@ -218,18 +250,88 @@
             el.addEventListener('touchstart', (e) => { sY = e.touches[0].clientY; document.addEventListener('touchmove', move, {passive:false}); document.addEventListener('touchend', stop, {once:true}); });
         }
 
-        setupKnob('vol-knob', 'Głośność', v => { vol = v; if(masterGain && isOn) masterGain.gain.setTargetAtTime(v, audioCtx.currentTime, 0.01); });
+        setupKnob('vol-knob', 'Głośność', v => { vol = v; if(masterGain && isOn) masterGain.gain.setTargetAtTime(v, audioCtx.currentTime, 0.05); });
         setupKnob('eq-bass', 'Basy', v => { if(bassFilter) bassFilter.gain.setTargetAtTime((v*30)-15, audioCtx.currentTime, 0.05); });
         setupKnob('eq-treble', 'Soprany', v => { if(trebleFilter) trebleFilter.gain.setTargetAtTime((v*30)-15, audioCtx.currentTime, 0.05); });
 
         document.getElementById('pwr-btn').onclick = function() {
             isOn = !isOn; this.classList.toggle('on');
             document.getElementById('radio-body').classList.toggle('power-active');
-            if(isOn) { initAudio(); masterGain.gain.setTargetAtTime(vol, audioCtx.currentTime, 0.5); updateRDS(); playSt(); } else stream.pause();
+            if(isOn) { 
+                initAudio(); 
+                masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+                updateRDS(); 
+                playSt(); 
+                fade(vol, 0.5); 
+            } else { 
+                fade(0, 0.4); 
+                document.getElementById('station-logo-display').style.opacity = "0";
+                setTimeout(() => { stream.pause(); document.getElementById('station-logo-display').style.display = "none"; }, 500); 
+            }
         };
 
         document.getElementById('lock-btn').onclick = () => { if(isOn) !wakeLock ? toggleWakeLock(true) : toggleWakeLock(false); };
-        function playSt() { stream.src = stations[currentIdx].url; stream.play().catch(()=>{}); document.getElementById('station-label').innerText = stations[currentIdx].name; updateListUI(); }
+        
+        function playSt() { 
+            stream.onwaiting = () => { stationLabel.innerText = "BUFOROWANIE..."; };
+            stream.onplaying = () => { stationLabel.innerText = stations[currentIdx].name; };
+            stream.onerror = () => { stationLabel.innerText = "BŁĄD POŁĄCZENIA"; };
+            stream.onloadstart = () => { stationLabel.innerText = "ŁADOWANIE..."; };
+
+            stream.src = stations[currentIdx].url; 
+            stream.play().catch(e => { console.log(e); stationLabel.innerText = "BŁĄD ODTWARZANIA"; }); 
+            updateListUI(); 
+
+            // Logo wyświetlane na stałe bez funkcji wygaszania
+            const logoDisplay = document.getElementById('station-logo-display');
+            if(stations[currentIdx].icon) {
+                logoDisplay.src = stations[currentIdx].icon;
+                logoDisplay.style.display = "block";
+                setTimeout(() => { logoDisplay.style.opacity = "1"; }, 10);
+            } else {
+                logoDisplay.style.opacity = "0";
+                logoDisplay.style.display = "none";
+            }
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: stations[currentIdx].name,
+                    artist: 'ION AUDIO',
+                    album: 'RADIO ONLINE',
+                    artwork: [
+                        { 
+                            src: stations[currentIdx].icon || 'https://cdn-icons-png.flaticon.com/512/3659/3659938.png', 
+                            sizes: '512x512', 
+                            type: 'image/png' 
+                        }
+                    ]
+                });
+                navigator.mediaSession.setActionHandler('previoustrack', () => document.getElementById('prev-btn').click());
+                navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
+            }
+        }
+
+        function exportBackup() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stations));
+            const dl = document.createElement('a');
+            dl.setAttribute("href", dataStr);
+            dl.setAttribute("download", "ion_radio_backup.json");
+            document.body.appendChild(dl); dl.click(); dl.remove();
+        }
+
+        function importBackup(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    stations = JSON.parse(ev.target.result);
+                    updateListUI();
+                    alert("Backup wczytany!");
+                } catch(err) { alert("Błędny plik!"); }
+            };
+            reader.readAsText(file);
+        }
 
         function updateListUI() {
             const b = document.getElementById('playlist-box'); b.innerHTML = '';
@@ -243,11 +345,11 @@
 
         document.getElementById('next-btn').onclick = () => { if(isOn) { currentIdx = (currentIdx+1)%stations.length; playSt(); }};
         document.getElementById('prev-btn').onclick = () => { if(isOn) { currentIdx = (currentIdx-1+stations.length)%stations.length; playSt(); }};
-        document.getElementById('mode-btn').onclick = () => { if(isOn) { visualMode = (visualMode+1)%6; updateRDS(); }};
+        document.getElementById('mode-btn').onclick = () => { if(isOn) { visualMode = (visualMode+1)%7; updateRDS(); }};
         document.getElementById('hue-btn').onclick = () => { if(isOn) currentHue = (currentHue+45)%360; };
         document.getElementById('add-st-btn').onclick = () => {
-            const n = document.getElementById('new-name').value, u = document.getElementById('new-url').value;
-            if(n && u) { stations.push({name:n, url:u, fav:false}); updateListUI(); }
+            const n = document.getElementById('new-name').value, u = document.getElementById('new-url').value, i = document.getElementById('new-icon').value;
+            if(n && u) { stations.push({name:n, url:u, fav:false, icon: i || ""}); updateListUI(); }
         };
 
         function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
