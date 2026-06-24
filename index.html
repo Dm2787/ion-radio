@@ -355,6 +355,15 @@
         function resize() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
         window.onresize = resize;
         updateListUI();
+
+        // REJESTRACJA SERVICE WORKERA (PWA)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('ION Radio SW zarejestrowany pomyslnie!', reg.scope))
+                    .catch(err => console.error('Blad rejestracji Service Workera:', err));
+            });
+        }
    </script>
 </body>
 </html>
