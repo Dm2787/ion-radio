@@ -4,12 +4,13 @@
   "description": "Radio internetowe z wizualizacjami",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3003/3003920.png",
+      "src": "./icon-192.png",
       "type": "image/png",
-      "sizes": "192x192"
+      "sizes": "192x192",
+      "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3003/3003920.png",
+      "src": "./icon-512.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
