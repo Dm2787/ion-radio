@@ -67,6 +67,16 @@
         .power-btn { background: #333; color: #fff; border: none; min-width: 55px; height: 45px; }
         .power-btn.on { background: var(--danger); box-shadow: 0 0 15px rgba(211,47,47,0.4); }
         .lock-btn.active { background: var(--danger) !important; color: white !important; box-shadow: 0 0 10px rgba(211,47,47,0.6); }
+        
+        /* Animacja pulsowania przycisku nagrywania */
+        #rec-btn.recording {
+            background: var(--danger) !important;
+            color: white !important;
+            animation: pulse-rec 1.5s infinite alternate;
+            box-shadow: 0 0 15px rgba(211,47,47,0.6);
+        }
+        @keyframes pulse-rec { 0% { opacity: 1; } 100% { opacity: 0.5; } }
+
         .power-active .brand-right { color: #fff; text-shadow: 0 0 8px #fff; }
         .power-active .brand-dot { background: #fff; box-shadow: 0 0 10px #fff; }
         .power-active .on-air-indicator { color: #fff; background: rgba(211,47,47,0.2); border: 1px solid var(--danger); }
@@ -125,6 +135,7 @@
                 <button class="push-button" id="mode-btn">WIZ</button>
                 <button class="push-button" id="hue-btn">KOLOR</button>
                 <button class="push-button lock-btn" id="lock-btn">BLOKADA</button>
+                <button class="push-button" id="rec-btn">REC</button>
             </div>
         </div>
     </div>
@@ -149,6 +160,10 @@
         let currentIdx = 0, isOn = false, audioCtx, analyser, dataArray, peaks = [], wakeLock = null;
         let vol = 0.5, source, bassFilter, trebleFilter, masterGain, currentHue = 190, visualMode = 0;
         let rdsTimeout;
+        
+        // Zmienne do obsługi nagrywania
+        let mediaRecorder, recordedChunks = [], isRecording = false, recDestination;
+
         const stream = new Audio(); stream.crossOrigin = "anonymous";
         const canvas = document.getElementById('vis-canvas');
         const ctx = canvas.getContext('2d');
@@ -164,7 +179,14 @@
             analyser = audioCtx.createAnalyser(); analyser.fftSize = 256; 
             dataArray = new Uint8Array(analyser.frequencyBinCount);
             peaks = new Array(analyser.frequencyBinCount).fill(0);
-            source.connect(bassFilter).connect(trebleFilter).connect(analyser).connect(masterGain).connect(audioCtx.destination);
+            
+            // Konfiguracja strumienia wyjściowego dla nagrywarki (przed masterGain)
+            recDestination = audioCtx.createMediaStreamDestination();
+            
+            source.connect(bassFilter).connect(trebleFilter).connect(analyser);
+            analyser.connect(recDestination); // Nagrywa audio po filtrach EQ
+            analyser.connect(masterGain).connect(audioCtx.destination);
+            
             resize(); render();
         }
 
@@ -232,7 +254,14 @@
         function updateRDS() {
             if(!isOn) return;
             const tryby = ["SŁUPKI", "LUSTRO", "BLOKI", "SYMETRIA", "WSTĘGA", "FALA", "PULS"];
-            document.getElementById('rds-info').innerText = `ION AUDIO >> STACJA: ${stations[currentIdx].name.toUpperCase()} >> TRYB: ${tryby[visualMode]} >> `;
+            let rdsBaseText = `ION AUDIO >> STACJA: ${stations[currentIdx].name.toUpperCase()} >> TRYB: ${tryby[visualMode]} >> `;
+            
+            // Informacja tekstowa na pasku stanu, jeśli nagrywamy
+            if (isRecording) {
+                rdsBaseText = `● REC • NAGRYWANIE STRUMIENIA • ${rdsBaseText}`;
+            }
+            
+            document.getElementById('rds-info').innerText = rdsBaseText;
             document.getElementById('rds-sig').innerText = `SYG: ${-20 + Math.floor(Math.random()*5)}dB`;
             setTimeout(updateRDS, 4000);
         }
@@ -264,6 +293,7 @@
                 playSt(); 
                 fade(vol, 0.5); 
             } else { 
+                if (isRecording) document.getElementById('rec-btn').click(); // Wyłączenie radia stopuje nagrywanie i zapisuje plik
                 fade(0, 0.4); 
                 document.getElementById('station-logo-display').style.opacity = "0";
                 setTimeout(() => { stream.pause(); document.getElementById('station-logo-display').style.display = "none"; }, 500); 
@@ -310,6 +340,52 @@
                 navigator.mediaSession.setActionHandler('nexttrack', () => document.getElementById('next-btn').click());
             }
         }
+
+        // AKCJA PRZYCISKU NAGRYWANIA (MediaRecorder)
+        document.getElementById('rec-btn').onclick = function() {
+            if (!isOn) return;
+
+            if (!isRecording) {
+                recordedChunks = [];
+                try {
+                    mediaRecorder = new MediaRecorder(recDestination.stream, { mimeType: 'audio/webm' });
+                } catch (e) {
+                    mediaRecorder = new MediaRecorder(recDestination.stream);
+                }
+
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) recordedChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+                    const url = URL.createObjectURL(blob);
+                    
+                    // Bezpieczna nazwa pliku bez znaków specjalnych
+                    const safeStationName = stations[currentIdx].name.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                    const timeStamp = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+                    
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = url;
+                    downloadLink.download = `ion_${safeStationName}_${timeStamp}.webm`;
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                    URL.revokeObjectURL(url);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                this.classList.add('recording');
+                this.innerText = "STOP REC";
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                this.classList.remove('recording');
+                this.innerText = "REC";
+            }
+            updateRDS();
+        };
 
         function exportBackup() {
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(stations));
